@@ -1,0 +1,688 @@
+import { useState } from "react";
+
+const COLORS = {
+  bg: "#0C0F12",
+  surface: "#151A1F",
+  surfaceHover: "#1C2229",
+  border: "#2A3038",
+  accent: "#E8722A",
+  accentLight: "#F09A5B",
+  accentDim: "rgba(232,114,42,0.12)",
+  green: "#34D399",
+  greenDim: "rgba(52,211,153,0.12)",
+  blue: "#60A5FA",
+  blueDim: "rgba(96,165,250,0.12)",
+  purple: "#A78BFA",
+  purpleDim: "rgba(167,139,250,0.12)",
+  rose: "#FB7185",
+  roseDim: "rgba(251,113,133,0.12)",
+  yellow: "#FBBF24",
+  yellowDim: "rgba(251,191,36,0.12)",
+  text: "#E8ECF0",
+  textMuted: "#8B95A3",
+  textDim: "#5A6370",
+};
+
+const TABS = [
+  { id: "overview", label: "System Overview" },
+  { id: "stack", label: "Tech Stack" },
+  { id: "data", label: "Data Model" },
+  { id: "features", label: "Feature Map" },
+  { id: "phases", label: "Build Phases" },
+  { id: "costs", label: "Cost Estimate" },
+];
+
+function Badge({ color, dimColor, children }) {
+  return (
+    <span style={{ background: dimColor, color, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, letterSpacing: 0.3 }}>
+      {children}
+    </span>
+  );
+}
+
+function Card({ title, icon, children, color = COLORS.accent, style = {} }) {
+  return (
+    <div style={{
+      background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10,
+      padding: "18px 20px", ...style,
+    }}>
+      {title && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color, letterSpacing: 0.3, textTransform: "uppercase" }}>{title}</h3>
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function OverviewTab() {
+  return (
+    <div>
+      <p style={{ color: COLORS.textMuted, fontSize: 14, lineHeight: 1.7, margin: "0 0 24px 0" }}>
+        <strong style={{ color: COLORS.text }}>FreshPlate</strong> is a multi-cook meal prep marketplace where local cooks like Paul publish weekly menus, customers reserve meals across multiple cooks, and the platform handles payments, notifications, and delivery logistics.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 24 }}>
+        {[
+          { icon: "👨‍🍳", title: "Cook App", desc: "Menu management, photo upload + AI cleanup, order tracking, delivery routing, finance dashboard, menu intelligence (request rankings + polls)", color: COLORS.accent },
+          { icon: "🛒", title: "Customer App", desc: "Browse menus, multi-cook cart, order tracking (5 stages), reviews, messaging, order history, request-again + vote on polls", color: COLORS.green },
+          { icon: "⚙️", title: "Platform Backend", desc: "Auth, payments (Stripe Connect), push notifications, email, route optimization, image processing", color: COLORS.blue },
+        ].map((item, i) => (
+          <Card key={i} title={item.title} icon={item.icon} color={item.color}>
+            <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, lineHeight: 1.6 }}>{item.desc}</p>
+          </Card>
+        ))}
+      </div>
+
+      <Card title="System Architecture" icon="🏗️" color={COLORS.purple}>
+        <div style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: COLORS.textMuted, lineHeight: 1.9, whiteSpace: "pre", overflowX: "auto" }}>
+{`
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          CLIENT LAYER                                   │
+│                                                                         │
+│   ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐   │
+│   │  React Native +  │    │   Next.js Web    │    │   Social Link  │   │
+│   │  Expo (iOS App)  │    │    App (PWA)     │    │  Card Previews │   │
+│   │                  │    │                  │    │  (OG Images)   │   │
+│   │  • Cook Views    │    │  • Customer Web  │    │                │   │
+│   │  • Customer Views│    │  • Browse/Order  │    │  • Dynamic OG  │   │
+│   │  • Delivery Mode │    │  • Cook Signup   │    │  • Meal Photos │   │
+│   └───────┬──────────┘    └───────┬──────────┘    └───────┬────────┘   │
+│           │                       │                       │             │
+└───────────┼───────────────────────┼───────────────────────┼─────────────┘
+            │                       │                       │
+            ▼                       ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         API LAYER (Next.js API Routes)                  │
+│                                                                         │
+│   /api/auth/*    /api/menus/*    /api/orders/*    /api/delivery/*       │
+│   /api/cooks/*   /api/images/*   /api/payments/*  /api/reviews/*       │
+│   /api/messages/*  /api/polls/*  /api/requests/*  /api/notifications/* │
+│                                                                         │
+└──────────┬──────────────────────────────┬───────────────────────────────┘
+           │                              │
+           ▼                              ▼
+┌──────────────────────────┐   ┌──────────────────────────────────────────┐
+│    SUPABASE (Core DB)    │   │          EXTERNAL SERVICES               │
+│                          │   │                                          │
+│  • PostgreSQL Database   │   │  ┌─────────────┐  ┌──────────────────┐  │
+│  • Auth (email, social)  │   │  │   Stripe    │  │  Expo Push       │  │
+│  • Row-Level Security    │   │  │   Connect   │  │  Notifications   │  │
+│  • Realtime Subscriptions│   │  │  (payments) │  │  (free)          │  │
+│  • Storage (meal photos) │   │  └─────────────┘  └──────────────────┘  │
+│  • Edge Functions        │   │  ┌─────────────┐  ┌──────────────────┐  │
+│                          │   │  │  Resend     │  │  Google Maps     │  │
+│                          │   │  │  (email)    │  │  Directions API  │  │
+│                          │   │  │  free tier  │  │  (route optim.)  │  │
+│                          │   │  └─────────────┘  └──────────────────┘  │
+│                          │   │  ┌─────────────┐  ┌──────────────────┐  │
+│                          │   │  │  rembg /    │  │  Vercel          │  │
+│                          │   │  │  Remove.bg  │  │  (hosting, free  │  │
+│                          │   │  │  (AI image) │  │   tier)          │  │
+│                          │   │  └─────────────┘  └──────────────────┘  │
+└──────────────────────────┘   └──────────────────────────────────────────┘
+`}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function StackTab() {
+  const sections = [
+    {
+      title: "Mobile App", icon: "📱", color: COLORS.accent, items: [
+        { name: "React Native + Expo", why: "Write once, run on iOS (and Android later). Expo handles builds, push notifications, and OTA updates without needing Xcode expertise. Shared JS codebase with the web app." },
+        { name: "Expo Router", why: "File-based routing like Next.js — familiar patterns, deep linking support for push notification navigation." },
+        { name: "Expo Image Picker", why: "Cook photo upload from camera or gallery, built into Expo." },
+      ]
+    },
+    {
+      title: "Web App", icon: "🌐", color: COLORS.green, items: [
+        { name: "Next.js 14 (App Router)", why: "React-based, handles both the customer-facing web app AND the API routes (backend). SSR for SEO on menu pages. API routes replace the need for a separate server." },
+        { name: "Tailwind CSS", why: "Rapid styling, works across web and (via NativeWind) React Native. Great for learning — utility classes are self-documenting." },
+      ]
+    },
+    {
+      title: "Backend & Database", icon: "🗄️", color: COLORS.blue, items: [
+        { name: "Supabase (PostgreSQL)", why: "Free tier covers 50K monthly active users, 500MB database, 1GB storage, 2M edge function invocations. Includes auth, realtime subscriptions, and row-level security. Eliminates need for custom auth code." },
+        { name: "Next.js API Routes", why: "Business logic lives here — order processing, payment webhooks, route optimization, notification dispatch. Deployed to Vercel for free." },
+        { name: "Vercel (Hosting)", why: "Free tier: 100GB bandwidth, serverless functions, automatic deploys from GitHub. Hosts both the web app and API." },
+      ]
+    },
+    {
+      title: "Payments", icon: "💳", color: COLORS.purple, items: [
+        { name: "Stripe Connect (Express)", why: "Built for marketplaces. Each cook gets a connected Stripe account. Platform takes a fee, Stripe splits payments automatically. Supports card payments + Apple Pay. 2.9% + $0.30 per transaction." },
+        { name: "Cash payment option", why: "Marked as 'Pay at Pickup/Delivery' — order is recorded but no Stripe charge. Paul settles in cash. Platform tracks it for accounting." },
+      ]
+    },
+    {
+      title: "Notifications", icon: "🔔", color: COLORS.rose, items: [
+        { name: "Expo Push Notifications", why: "Free, unlimited. Works on iOS and Android. Perfect for order stage updates, delivery ETAs, and cook messages." },
+        { name: "Resend (Email)", why: "Free tier: 100 emails/day (3,000/month). Handles order confirmations, delivery receipts for web-only users. Beautiful templates with React Email." },
+      ]
+    },
+    {
+      title: "Image Processing", icon: "🎨", color: COLORS.yellow, items: [
+        { name: "rembg (open source)", why: "Free background removal, runs as a Supabase Edge Function or small Docker container. Removes kitchen table backgrounds from Paul's food photos." },
+        { name: "Sharp.js", why: "Free image manipulation — resize, optimize, add white background after rembg removes the original. Runs in API routes." },
+        { name: "Fallback: Remove.bg API", why: "If rembg quality isn't sufficient, Remove.bg costs ~$0.05/image with excellent quality. At Paul's volume (~20 photos/month), cost is ~$1/month." },
+      ]
+    },
+    {
+      title: "Delivery & Maps", icon: "🗺️", color: COLORS.accent, items: [
+        { name: "Google Maps Directions API", why: "Optimized waypoint routing for delivery batches. Free tier: $200/month credit (covers ~40,000 direction requests). More than enough." },
+        { name: "Google Maps Geocoding", why: "Convert customer addresses to lat/lng for route clustering and optimization. Covered by the same $200 free credit." },
+      ]
+    },
+    {
+      title: "Social Sharing", icon: "📣", color: COLORS.green, items: [
+        { name: "Next.js Dynamic OG Images", why: "Auto-generates beautiful link preview cards when Paul shares his weekly menu URL on Facebook/Instagram. Shows meal photos, cook name, and prices — all free, built into Next.js." },
+        { name: "@vercel/og", why: "Generates OG images at the edge. When someone sees Paul's link on social media, they see a professional card with his food photos." },
+      ]
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {sections.map((section, i) => (
+        <Card key={i} title={section.title} icon={section.icon} color={section.color}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {section.items.map((item, j) => (
+              <div key={j} style={{ padding: "10px 14px", background: COLORS.bg, borderRadius: 6, border: `1px solid ${COLORS.border}` }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.text, marginBottom: 4 }}>{item.name}</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.6 }}>{item.why}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function DataModelTab() {
+  const tables = [
+    {
+      name: "users", color: COLORS.blue, fields: [
+        "id (uuid, PK)", "email", "full_name", "phone", "avatar_url",
+        "role (customer | cook | admin)", "default_address", "default_lat", "default_lng",
+        "delivery_preference (pickup | delivery)", "push_token", "created_at"
+      ]
+    },
+    {
+      name: "cooks", color: COLORS.accent, fields: [
+        "id (uuid, PK → users.id)", "display_name", "bio", "profile_photo_url",
+        "kitchen_address", "kitchen_lat", "kitchen_lng", "stripe_account_id",
+        "delivery_fee (decimal)", "delivery_radius_miles", "is_active (bool)", "rating_avg (decimal)", "total_reviews (int)"
+      ]
+    },
+    {
+      name: "menu_items", color: COLORS.accent, fields: [
+        "id (uuid, PK)", "cook_id (FK → cooks)", "name", "description",
+        "price (decimal)", "photo_url_original", "photo_url_processed",
+        "category (entree | side | dessert | drink)", "tags (text[])", "is_active (bool)",
+        "rating_avg", "total_reviews", "created_at"
+      ]
+    },
+    {
+      name: "weekly_menus", color: COLORS.accent, fields: [
+        "id (uuid, PK)", "cook_id (FK → cooks)", "week_start_date (date)",
+        "title", "description", "is_published (bool)",
+        "published_at", "created_at"
+      ]
+    },
+    {
+      name: "weekly_menu_items", color: COLORS.accent, fields: [
+        "id (uuid, PK)", "weekly_menu_id (FK)", "menu_item_id (FK)",
+        "max_orders (int)", "current_orders (int, default 0)",
+        "available_date (date — specific day within the week)",
+        "prep_status (scheduled | preparing | ready | delivered)"
+      ]
+    },
+    {
+      name: "orders", color: COLORS.green, fields: [
+        "id (uuid, PK)", "customer_id (FK → users)", "order_number (auto-increment display)",
+        "status (reserved | preparing | ready | out_for_delivery | delivered | cancelled)",
+        "payment_method (card | cash)", "payment_status (pending | paid | refunded)",
+        "stripe_payment_intent_id", "subtotal", "delivery_fee", "platform_fee", "total",
+        "delivery_preference (pickup | delivery)", "delivery_address", "delivery_lat", "delivery_lng",
+        "special_instructions", "week_start_date", "created_at", "updated_at"
+      ]
+    },
+    {
+      name: "order_items", color: COLORS.green, fields: [
+        "id (uuid, PK)", "order_id (FK → orders)", "weekly_menu_item_id (FK)",
+        "cook_id (FK → cooks)", "menu_item_name (denormalized)", "quantity (int)",
+        "unit_price (decimal)", "line_total (decimal)"
+      ]
+    },
+    {
+      name: "delivery_routes", color: COLORS.purple, fields: [
+        "id (uuid, PK)", "cook_id (FK → cooks)", "driver_id (FK → users)",
+        "batch_name", "status (planning | in_progress | completed)",
+        "optimized_waypoints (jsonb — ordered addresses)", "started_at", "completed_at"
+      ]
+    },
+    {
+      name: "delivery_stops", color: COLORS.purple, fields: [
+        "id (uuid, PK)", "route_id (FK → delivery_routes)", "order_id (FK → orders)",
+        "sequence_number (int)", "address", "lat", "lng",
+        "status (pending | next | arrived | confirmed)", "eta_minutes (int)",
+        "confirmed_at"
+      ]
+    },
+    {
+      name: "reviews", color: COLORS.yellow, fields: [
+        "id (uuid, PK)", "customer_id (FK → users)", "menu_item_id (FK → menu_items)",
+        "cook_id (FK → cooks)", "order_id (FK → orders)",
+        "rating (1-5)", "description", "created_at"
+      ]
+    },
+    {
+      name: "messages", color: COLORS.rose, fields: [
+        "id (uuid, PK)", "sender_id (FK → users)", "receiver_id (FK → users)",
+        "order_id (FK → orders, nullable)", "content", "read_at", "created_at"
+      ]
+    },
+    {
+      name: "notifications", color: COLORS.rose, fields: [
+        "id (uuid, PK)", "user_id (FK → users)", "type (order_update | delivery | message | poll | promo)",
+        "title", "body", "data (jsonb — deep link info)", "read (bool)", "sent_at"
+      ]
+    },
+    {
+      name: "menu_item_requests", color: COLORS.green, fields: [
+        "id (uuid, PK)", "customer_id (FK → users)", "menu_item_id (FK → menu_items)",
+        "cook_id (FK → cooks)", "is_active (bool, default true)",
+        "created_at",
+        "— unique constraint on (customer_id, menu_item_id, is_active)",
+        "— is_active resets to false when cook serves the item again"
+      ]
+    },
+    {
+      name: "menu_polls", color: COLORS.green, fields: [
+        "id (uuid, PK)", "cook_id (FK → cooks)",
+        "question (text — e.g. 'What should I make next week?')",
+        "status (active | closed)", "closes_at (timestamp)",
+        "is_public (bool — shareable on social)", "total_votes (int)",
+        "created_at"
+      ]
+    },
+    {
+      name: "menu_poll_options", color: COLORS.green, fields: [
+        "id (uuid, PK)", "poll_id (FK → menu_polls)",
+        "menu_item_id (FK → menu_items, nullable — can be a new idea)",
+        "label (text — dish name)", "photo_url", "vote_count (int, default 0)",
+        "sort_order (int)"
+      ]
+    },
+    {
+      name: "menu_poll_votes", color: COLORS.green, fields: [
+        "id (uuid, PK)", "poll_id (FK → menu_polls)",
+        "option_id (FK → menu_poll_options)", "customer_id (FK → users)",
+        "created_at",
+        "— unique constraint on (poll_id, customer_id) — one vote per poll"
+      ]
+    },
+  ];
+
+  return (
+    <div>
+      <p style={{ color: COLORS.textMuted, fontSize: 13, lineHeight: 1.7, margin: "0 0 20px 0" }}>
+        PostgreSQL tables in Supabase. Multi-tenant from day one — every menu item, order, and route ties back to a <code style={{ color: COLORS.accent, background: COLORS.accentDim, padding: "1px 5px", borderRadius: 3, fontSize: 12 }}>cook_id</code>. Row-Level Security (RLS) ensures cooks only see their own data, customers see only their orders.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {tables.map((table, i) => (
+          <div key={i} style={{
+            background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              padding: "10px 16px", borderBottom: `1px solid ${COLORS.border}`,
+              background: `linear-gradient(135deg, ${COLORS.bg}, ${COLORS.surface})`,
+            }}>
+              <span style={{ fontFamily: "'Courier New', monospace", fontSize: 13, fontWeight: 700, color: table.color }}>{table.name}</span>
+            </div>
+            <div style={{ padding: "10px 16px" }}>
+              {table.fields.map((field, j) => (
+                <div key={j} style={{
+                  fontFamily: "'Courier New', monospace", fontSize: 11, color: COLORS.textMuted,
+                  padding: "3px 0", borderBottom: j < table.fields.length - 1 ? `1px solid ${COLORS.border}22` : "none",
+                }}>
+                  {field}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FeatureMapTab() {
+  const [view, setView] = useState("cook");
+  const cookFeatures = [
+    { area: "Onboarding", items: ["Sign up / profile setup", "Stripe Connect account linking", "Kitchen address + delivery radius", "Profile photo upload"] },
+    { area: "Menu Management", items: ["Upload meal photo → AI background removal", "Add name, description, price, category", "Tag meals (vegan, gluten-free, spicy, etc.)", "Archive/reactivate menu items"] },
+    { area: "Weekly Scheduling", items: ["Create weekly menu (select 3 items per week)", "Set max orders per item", "Schedule up to 4 weeks ahead", "Publish/unpublish menus", "View current reservation count vs. max"] },
+    { area: "Menu Intelligence", items: ["Request Dashboard — ranked list of customer-requested past meals", "See request count per item + last served date", "Requests auto-reset when item is served again", "Create weekly polls (pick 2–4 options for customers to vote on)", "View poll results with vote counts + percentages", "Use poll/request data to inform weekly menu selection"] },
+    { area: "Order Management", items: ["View all reservations by week", "Update order stage (5 stages)", "Bulk update stages for a week's orders", "View individual order details + special instructions", "Handle cancellation requests"] },
+    { area: "Delivery System", items: ["View delivery addresses on map", "Auto-suggest optimized route", "Create custom delivery batches (select addresses)", "Assign driver (self or helper)", "Start delivery → auto-notify all customers with ETA", "Mark each stop as confirmed → notify customer", "Next-in-line notification with live ETA update"] },
+    { area: "Messaging", items: ["Message individual customers", "Bulk message all customers", "Bulk message customers for a specific week", "Push notification + in-app inbox"] },
+    { area: "Finance Dashboard", items: ["Weekly revenue breakdown by item", "Monthly + all-time revenue totals", "Orders count by week", "Cash vs. card payment breakdown", "Delivery fee revenue", "Visual charts (trend over time)"] },
+    { area: "Social Sharing", items: ["Generate shareable link for weekly menu", "Auto-generated OG image with meal photos", "Copy link / share to Instagram, Facebook, etc.", "Share active polls on social media to drive engagement"] },
+  ];
+
+  const customerFeatures = [
+    { area: "Browse & Discover", items: ["View all cooks in marketplace", "Browse next 4 weeks of menus (one week at a time)", "See meal photos, descriptions, prices", "View ratings and reviews per meal", "Filter by cook, category, dietary tags"] },
+    { area: "Ordering", items: ["Add meals from multiple cooks to one cart", "See max availability + spots remaining", "Set delivery preference (pickup or delivery)", "Enter/save delivery address", "Add special instructions per order", "Choose payment: card (Stripe) or cash"] },
+    { area: "Order Tracking", items: ["5-stage progress tracker per order", "Push notifications at each stage transition", "Custom ETA when delivery starts", "'Next in line' notification", "Delivery confirmed notification"] },
+    { area: "Order History & Requests", items: ["View upcoming orders", "View past order history", "Cancel order (before prep starts)", "'Request Again' button on past items (one tap)", "See which of your requests a cook has served"] },
+    { area: "Polls & Voting", items: ["View active polls from cooks you follow", "Vote on what the cook should make next week", "See live poll results after voting", "Polls accessible via social media share links"] },
+    { area: "Reviews", items: ["Rate menu items (1-5 stars)", "Write description", "View other customers' reviews", "Reviews show on menu item cards"] },
+    { area: "Communication", items: ["Message cook about an order", "Receive push notifications", "Email confirmations (web users)", "Update delivery preferences"] },
+  ];
+
+  const features = view === "cook" ? cookFeatures : customerFeatures;
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        {[{ id: "cook", label: "👨‍🍳 Cook Features", color: COLORS.accent }, { id: "customer", label: "🛒 Customer Features", color: COLORS.green }].map(v => (
+          <button key={v.id} onClick={() => setView(v.id)} style={{
+            background: view === v.id ? v.color : COLORS.surface,
+            color: view === v.id ? "#fff" : COLORS.textMuted,
+            border: `1px solid ${view === v.id ? v.color : COLORS.border}`,
+            padding: "8px 16px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer",
+          }}>{v.label}</button>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {features.map((section, i) => (
+          <Card key={i} title={section.area} color={view === "cook" ? COLORS.accent : COLORS.green}>
+            {section.items.map((item, j) => (
+              <div key={j} style={{
+                display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0",
+                borderBottom: j < section.items.length - 1 ? `1px solid ${COLORS.border}22` : "none",
+              }}>
+                <span style={{ color: COLORS.textDim, fontSize: 11, marginTop: 2 }}>●</span>
+                <span style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>{item}</span>
+              </div>
+            ))}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PhasesTab() {
+  const phases = [
+    {
+      name: "Phase 1 — Foundation", time: "Weeks 1–3", color: COLORS.blue, badge: "START HERE",
+      goal: "Get the core platform running: auth, database, basic cook + customer flows. Paul can publish menus and take orders.",
+      tasks: [
+        "Set up Supabase project (database, auth, storage)",
+        "Create Next.js project with API routes",
+        "Set up Expo / React Native project",
+        "Implement user auth (email signup/login)",
+        "Build cook profile setup flow",
+        "Build menu item CRUD (create, edit, delete meals)",
+        "Build weekly menu scheduling (select items, set max orders)",
+        "Build customer browse view (see menus by week)",
+        "Build basic cart + order reservation flow",
+        "Email confirmation on order (Resend)",
+        "Order cancellation",
+      ],
+    },
+    {
+      name: "Phase 2 — Payments & Images", time: "Weeks 4–5", color: COLORS.green, badge: "MONEY",
+      goal: "Accept real payments, make food photos look professional. Platform becomes functional for real customers.",
+      tasks: [
+        "Integrate Stripe Connect (cook onboarding)",
+        "Implement card checkout flow",
+        "Cash payment tracking",
+        "Platform fee logic + payment splitting",
+        "Image upload for menu items",
+        "AI background removal (rembg or Remove.bg)",
+        "Image optimization + white background compositing",
+        "Social sharing OG image generation",
+      ],
+    },
+    {
+      name: "Phase 3 — Order Tracking & Notifications", time: "Weeks 6–7", color: COLORS.purple, badge: "REAL-TIME",
+      goal: "Dominos-style order stages, push notifications, and cook-to-customer messaging.",
+      tasks: [
+        "5-stage order status system",
+        "Cook interface to update order stages (single + bulk)",
+        "Push notification setup (Expo Push)",
+        "Notification triggers at each stage transition",
+        "In-app notification inbox",
+        "Cook → customer messaging (1:1)",
+        "Cook → all customers bulk messaging",
+        "Supabase Realtime subscriptions for live status updates",
+      ],
+    },
+    {
+      name: "Phase 4 — Delivery System", time: "Weeks 8–10", color: COLORS.accent, badge: "LOGISTICS",
+      goal: "Smart delivery routing, multi-driver support, ETA notifications. The killer feature.",
+      tasks: [
+        "Customer address geocoding + storage",
+        "Delivery map view for cooks (see all drop-off points)",
+        "Google Maps route optimization (waypoint ordering)",
+        "Batch creation (select stops, name the batch)",
+        "Multi-driver: assign batches to different drivers",
+        "Driver 'Start Route' → notify all customers with ETA",
+        "'Confirmed Delivery' button at each stop",
+        "'You're next' notification to next customer",
+        "Route completion summary",
+      ],
+    },
+    {
+      name: "Phase 5 — Reviews, Finance & Menu Intelligence", time: "Weeks 11–13", color: COLORS.yellow, badge: "GROWTH",
+      goal: "Customer reviews, cook finance dashboard, and the menu intelligence system (request-again + polls) that helps cooks make smarter menus.",
+      tasks: [
+        "Review + rating system (per menu item)",
+        "Aggregate ratings on menu items + cook profiles",
+        "Cook finance dashboard — weekly/monthly/all-time revenue",
+        "Revenue charts (Recharts)",
+        "Order count + average order value metrics",
+        "Cash vs. card breakdown",
+        "Past order history for customers",
+        "'Request Again' button on order history items",
+        "menu_item_requests table + API (one request per customer per item)",
+        "Cook Request Dashboard — ranked items by request count",
+        "Auto-reset requests when cook serves the item",
+        "Poll creation UI for cooks (question + 2–4 options)",
+        "Customer poll voting (one vote per poll, enforced)",
+        "Live poll results with vote counts + percentages",
+        "Shareable poll links for social media",
+      ],
+    },
+    {
+      name: "Phase 6 — Polish & Launch", time: "Weeks 14–16", color: COLORS.rose, badge: "SHIP IT",
+      goal: "iOS App Store submission, performance tuning, onboard Paul as first cook, beta test with his customers.",
+      tasks: [
+        "iOS App Store submission (Expo EAS Build)",
+        "Web app deployment to custom domain",
+        "Performance optimization + error handling",
+        "Onboard Paul: profile, menus, Stripe setup",
+        "Beta test with 10 of Paul's customers",
+        "Iterate on feedback",
+        "Full launch to Paul's customer base",
+      ],
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {phases.map((phase, i) => (
+        <Card key={i} title={phase.name} color={phase.color} style={{ borderLeft: `3px solid ${phase.color}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <Badge color={phase.color} dimColor={`${phase.color}20`}>{phase.badge}</Badge>
+            <span style={{ fontSize: 12, color: COLORS.textDim }}>{phase.time}</span>
+          </div>
+          <p style={{ margin: "0 0 12px 0", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.6, fontStyle: "italic" }}>{phase.goal}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            {phase.tasks.map((task, j) => (
+              <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0" }}>
+                <span style={{ color: COLORS.textDim, fontSize: 10, marginTop: 3 }}>☐</span>
+                <span style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>{task}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function CostsTab() {
+  const monthly = [
+    { service: "Supabase", tier: "Free", cost: "$0", notes: "50K MAU, 500MB DB, 1GB storage, 2M edge fn calls. Covers Paul's scale easily." },
+    { service: "Vercel", tier: "Free (Hobby)", cost: "$0", notes: "100GB bandwidth, serverless functions, auto-deploy. Sufficient for launch." },
+    { service: "Stripe Connect", tier: "Pay-as-you-go", cost: "~2.9% + $0.30/txn", notes: "Only on card payments. Cash payments have no fee. At $15 avg order × 200 orders/mo = ~$180/mo in fees." },
+    { service: "Resend (Email)", tier: "Free", cost: "$0", notes: "100 emails/day = 3,000/month. Order confirmations + delivery alerts." },
+    { service: "Expo Push", tier: "Free", cost: "$0", notes: "Unlimited push notifications." },
+    { service: "Google Maps API", tier: "Free credit", cost: "$0", notes: "$200/month free credit. Route optimization + geocoding. More than enough." },
+    { service: "Expo EAS Build", tier: "Free", cost: "$0", notes: "30 builds/month on free tier. Plenty for development + updates." },
+    { service: "Apple Developer", tier: "Annual", cost: "$99/year", notes: "Required to publish on iOS App Store. Only hard cost." },
+    { service: "Domain name", tier: "Annual", cost: "~$12/year", notes: "freshplate.com or similar. One-time yearly." },
+    { service: "Image processing", tier: "Free / low", cost: "$0–$1/mo", notes: "rembg is free. Remove.bg fallback at ~20 photos/mo = ~$1." },
+  ];
+
+  return (
+    <div>
+      <Card title="Monthly Operating Costs" icon="💰" color={COLORS.green}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "180px 100px 90px 1fr", gap: 0, borderBottom: `1px solid ${COLORS.border}`, paddingBottom: 8, marginBottom: 8 }}>
+            {["Service", "Tier", "Cost", "Notes"].map(h => (
+              <span key={h} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>{h}</span>
+            ))}
+          </div>
+          {monthly.map((item, i) => (
+            <div key={i} style={{
+              display: "grid", gridTemplateColumns: "180px 100px 90px 1fr", gap: 0,
+              padding: "8px 0", borderBottom: `1px solid ${COLORS.border}22`,
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>{item.service}</span>
+              <span style={{ fontSize: 12, color: COLORS.textMuted }}>{item.tier}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: item.cost === "$0" ? COLORS.green : COLORS.yellow }}>{item.cost}</span>
+              <span style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>{item.notes}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div style={{ height: 16 }} />
+
+      <Card title="Total Cost Summary" icon="📊" color={COLORS.accent}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+          {[
+            { label: "Development Cost", value: "$0", sub: "Your time + Claude's help" },
+            { label: "Fixed Annual Costs", value: "~$111/yr", sub: "$99 Apple Dev + $12 domain" },
+            { label: "Variable Monthly", value: "~$0–$5/mo", sub: "Only Stripe fees on card txns" },
+          ].map((item, i) => (
+            <div key={i} style={{ background: COLORS.bg, borderRadius: 8, padding: "16px 20px", border: `1px solid ${COLORS.border}`, textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 800, color: COLORS.green, marginBottom: 4 }}>{item.value}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, marginBottom: 4 }}>{item.label}</div>
+              <div style={{ fontSize: 11, color: COLORS.textDim }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: "16px 0 0 0", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.6 }}>
+          <strong style={{ color: COLORS.text }}>Future marketplace revenue model:</strong> When you expand to multiple cooks, the platform takes a percentage of each transaction via Stripe Connect (you set the rate — e.g., 10–15%). Stripe handles the split automatically. At 10 cooks doing $5K/month each, a 12% platform fee = $6,000/month revenue.
+        </p>
+      </Card>
+
+      <div style={{ height: 16 }} />
+
+      <Card title="When to Upgrade (Scale Triggers)" icon="📈" color: COLORS.blue>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { trigger: "50K+ MAU on Supabase", action: "Upgrade to Pro ($25/mo) — 8GB DB, 100GB storage", when: "Likely at ~10+ active cooks" },
+            { trigger: "100GB+ bandwidth on Vercel", action: "Upgrade to Pro ($20/mo) — 1TB bandwidth", when: "Likely at ~500+ active customers" },
+            { trigger: "3,000+ emails/month", action: "Upgrade Resend to $20/mo tier (50K emails)", when: "Likely at ~15+ active cooks" },
+          ].map((item, i) => (
+            <div key={i} style={{ background: COLORS.bg, borderRadius: 6, padding: "12px 16px", border: `1px solid ${COLORS.border}` }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, marginBottom: 4 }}>{item.trigger}</div>
+              <div style={{ fontSize: 12, color: COLORS.textMuted }}>{item.action}</div>
+              <div style={{ fontSize: 11, color: COLORS.textDim, marginTop: 4 }}>{item.when}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export default function ArchitectureOverview() {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case "overview": return <OverviewTab />;
+      case "stack": return <StackTab />;
+      case "data": return <DataModelTab />;
+      case "features": return <FeatureMapTab />;
+      case "phases": return <PhasesTab />;
+      case "costs": return <CostsTab />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: COLORS.bg, color: COLORS.text,
+      fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <span style={{ fontSize: 28 }}>🍽️</span>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: -0.5, color: COLORS.text }}>
+              FreshPlate <span style={{ color: COLORS.textDim, fontWeight: 400, fontSize: 16 }}>Architecture</span>
+            </h1>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: COLORS.textDim }}>
+            Multi-cook meal prep marketplace — v1.0 Architecture Document — Stephen & Paul
+          </p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div style={{
+          display: "flex", gap: 4, marginBottom: 24, overflowX: "auto",
+          borderBottom: `1px solid ${COLORS.border}`, paddingBottom: 0,
+        }}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                padding: "10px 16px", fontSize: 13, fontWeight: 600,
+                color: activeTab === tab.id ? COLORS.accent : COLORS.textDim,
+                borderBottom: activeTab === tab.id ? `2px solid ${COLORS.accent}` : "2px solid transparent",
+                marginBottom: -1, whiteSpace: "nowrap", transition: "all 0.15s",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        {renderTab()}
+
+        {/* Footer */}
+        <div style={{ marginTop: 32, padding: "16px 0", borderTop: `1px solid ${COLORS.border}`, fontSize: 11, color: COLORS.textDim }}>
+          Architecture designed for Paul's meal prep business in Fargo, ND — built to scale into a multi-cook marketplace. All costs estimated at launch-scale (~50–100 customers per cook).
+        </div>
+      </div>
+    </div>
+  );
+}
